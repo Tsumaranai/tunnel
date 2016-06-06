@@ -24,7 +24,7 @@ class tun():
 
     def config(self):
         self.ip = IP
-	self.tunip = "10.0.0.1"
+        self.tunip = "10.0.0.1"
         os.system("ifconfig %s  %s pointopoint %s up" % (self.name, self.ip, self.tunip))
         os.system("ip link set %s mtu %s" % (self.name, MTU))
     def ping_reply(self, iden, seqNO, data):        
@@ -61,9 +61,9 @@ class tun_c(tun):
         #os.system("route add default dev eth0")
         os.system("iptables -t nat -D PREROUTING -i %s -p icmp  -j DNAT --to-destination  %s"% (DEV, self.tunip))
         #os.close(self.fd)
-	#exit()
+        #exit()
 
-	
+
 class tun_s(tun):
 
     def set_rule(self):
@@ -86,32 +86,32 @@ class tun_s(tun):
             if fd == self.tfd:
                 #this message from a webip
                 data = os.read(fd, MTU)
-         	appkt = pkt.ip()
-		appkt.parse(data)
+                appkt = pkt.ip()
+                appkt.parse(data)
                 for t_ip in client:
-
+                    
                     if client[t_ip]["appdip"] == appkt.src and client[t_ip]["appsip"] == appkt.dst:
                         #find which clinet requested this message
                         icmpkt = pkt.icmp()
                         buf = icmpkt.create(REQ, 0, 0, client[t_ip]["iden"], client[t_ip]["seq"], MAGIC+data)
                         self.icmpfd.sendto(buf, (client[t_ip]["ip"], 0))
                         break
-
+                        
             elif fd == self.icmpfd:
                 #this message from a client
                 self.client = {}
                 data = os.read(fd, MTU)
                 ipkt = pkt.ip()
                 buf = ipkt.parse(data)
-
+                
                 icmpkt = pkt.icmp()
                 buf = icmpkt.parse(buf)
-
+                
                 if icmpkt._type == 0 and buf[:3] == MAGIC:
                     #this is a tunnel request, 3 is the length of MAGIC
                     appkt = pkt.ip()
                     appkt.parse(buf[3:])
-
+                    
                     ID = struct.pack("12sH",(ipkt.src, icmpkt.iden))
                     client[ID] = {"ip": ipkt.asrc, "iden": icmpkt.iden, "seq": icmpkt.seqNO, "appdip": appkt.dst, "appsip":appkt.src}
                     os.write(self.tfd, buf[3:])
